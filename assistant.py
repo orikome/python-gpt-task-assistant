@@ -35,8 +35,16 @@ def save_tasks(data):
     with open('tasks.json', 'w') as file:
         json.dump(data, file, indent=4)
 
+# Load goals
+def load_goals():
+    try:
+        with open('goals.json', 'r') as file:
+            return json.load(file).get('goals', [])
+    except FileNotFoundError:
+        return []
+
 # Generate GPT response for motivation or support
-def generate_response(tasks, streak, previous_feedback):
+def generate_response(tasks, streak, previous_feedback, goals):
     task_reports = []
     for task in tasks:
         report = (
@@ -51,15 +59,25 @@ def generate_response(tasks, streak, previous_feedback):
                 report += "\nSpecial Attention: This task has been uncompleted for a long time. Help the user break it into manageable chunks to get started again."
         task_reports.append(report)
 
+    pre_prompt = (
+        "Make sure distractions are minimized (e.g., close YouTube, Reddit, etc.). "
+        "Remember your main goals. "
+        "Keep in mind any strategies that work for you (e.g., timers, short breaks)."
+    )
+
+    goals_text = "Here are the user's main goals:\n" + "\n".join(goals)
+
     prompt = (
+        pre_prompt + "\n\n" +
+        goals_text + "\n\n" +
         "Here is today's task report:\n\n" +
         "\n\n".join(task_reports) +
-        "\n\nAs the assistant, provide strict but encouraging support. "
-        "Remind the user of the importance of discipline and consistency. "
-        "Encourage them to reflect on what went well today and identify areas for improvement. "
-        "Advise the user to break down the unfinished tasks into smaller, manageable steps and approach them with determination tomorrow. "
-        "Emphasize that by staying focused and maintaining a steady routine, they can achieve their goals and feel more accomplished. "
-        "Offer specific, actionable suggestions for tackling these tasks and maintaining their progress."
+        "\n\nAs the assistant, provide strict but assuring support. "
+        "First, review each task from today and identify any room for improvement. "
+        "For those tasks that remain unfinished, help the user break them down into smaller, manageable steps, encouraging a focused approach for completion. "
+        "Emphasize the importance of discipline and consistency. "
+        "Based on today's feedback, create a structured schedule for tomorrow that prioritizes unfinished tasks and seamlessly integrates new tasks as needed. "
+        "This schedule is crafted to maximize focus and efficiency, ensuring a productive day ahead."
     )
 
     # Print the prompt for debugging purposes
@@ -98,6 +116,8 @@ def main():
     check_new_day(data)
     
     console.print("Welcome! Let's manage your tasks for today.", style="bold blue")
+    
+    goals = load_goals()
     
     while True:
         action = Prompt.ask("What would you like to do? (add/view/summary/quit)").lower()
@@ -158,7 +178,7 @@ def main():
             for task in data['tasks']:
                 task['previous_feedback'] = task.get('feedback', 'No previous feedback')
 
-            response = generate_response(data['tasks'], data['streak'], data['previous_feedback'])
+            response = generate_response(data['tasks'], data['streak'], data['previous_feedback'], goals)
             console.print(response, style="bold yellow")
             save_tasks(data)
         
