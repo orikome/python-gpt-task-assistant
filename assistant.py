@@ -62,7 +62,9 @@ def generate_response(tasks, streak, previous_feedback, goals):
     pre_prompt = (
         "Make sure distractions are minimized (e.g., close YouTube, Reddit, etc.). "
         "Remember your main goals. "
-        "Keep in mind any strategies that work for you (e.g., timers, short breaks)."
+        "Structure your entire day around optimizing sleep; sleep is the number one priority. "
+        "Keep in mind that your sleep routine starts the moment you wake up. "
+        "Implement strategies that work for you (e.g., timers, short breaks) to maintain focus and productivity throughout the day."
     )
 
     goals_text = "Here are the user's main goals:\n" + "\n".join(goals)
