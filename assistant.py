@@ -102,8 +102,8 @@ def check_new_day(data):
     today = datetime.date.today().isoformat()
     if 'last_updated' in data and data['last_updated'] == today:
         return
-    # Store previous day's feedback
-    data['previous_feedback'] = [task for task in data['tasks'] if 'feedback' in task]
+    # Move today's feedback to previous feedback
+    data['previous_feedback'] = [task.get('feedback', 'No feedback provided') for task in data['tasks']]
     for task in data['tasks']:
         if task['repeating']:
             task['completed'] = False
@@ -160,7 +160,6 @@ def main():
                 feedback = Prompt.ask(f"Provide feedback for the task '{task['description']}' (or press Enter to skip)")
                 if feedback:
                     task['feedback'] = feedback
-                feedbacks.append(task)
                 if completed:
                     task["completed"] = True
                     task["streak"] += 1
@@ -176,10 +175,6 @@ def main():
                         task["reason"] = "no reason provided"
                     unfinished_tasks.append(task)
             
-            # Update previous feedbacks
-            for task in data['tasks']:
-                task['previous_feedback'] = task.get('feedback', 'No previous feedback')
-
             response = generate_response(data['tasks'], data['streak'], data['previous_feedback'], goals)
             console.print(response, style="bold yellow")
             save_tasks(data)
