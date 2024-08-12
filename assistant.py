@@ -15,6 +15,14 @@ if not api_key:
     raise ValueError("The OPENAI_API_KEY environment variable is not set.")
 client = OpenAI(api_key=api_key)
 
+# Load prompts from JSON file
+def load_prompts():
+    try:
+        with open('prompts.json', 'r') as file:
+            return json.load(file)
+    except FileNotFoundError:
+        raise ValueError("The prompts.json file is missing.")
+
 # Load tasks
 def load_tasks():
     try:
@@ -45,6 +53,9 @@ def load_goals():
 
 # Generate GPT response for motivation or support
 def generate_response(tasks, streak, previous_feedback, goals):
+    prompts = load_prompts()
+
+    # Generate the task reports based on the user's self-report
     task_reports = []
     for task in tasks:
         report = (
@@ -59,27 +70,13 @@ def generate_response(tasks, streak, previous_feedback, goals):
                 report += "\nSpecial Attention: This task has been uncompleted for a long time. Help the user break it into manageable chunks to get started again."
         task_reports.append(report)
 
-    pre_prompt = (
-        "Make sure distractions are minimized (e.g., close YouTube, Reddit, etc.). "
-        "Remember your main goals. "
-        "Structure your entire day around optimizing sleep; sleep is the number one priority. "
-        "Keep in mind that your sleep routine starts the moment you wake up. "
-        "Implement strategies that work for you (e.g., timers, short breaks) to maintain focus and productivity throughout the day."
-    )
-
-    goals_text = "Here are the user's main goals:\n" + "\n".join(goals)
-
+    # Final prompt construction
     prompt = (
-        pre_prompt + "\n\n" +
-        goals_text + "\n\n" +
-        "Here is today's task report:\n\n" +
-        "\n\n".join(task_reports) +
-        "\n\nAs the assistant, provide strict but assuring support. "
-        "First, review each task from today and identify any room for improvement. "
-        "For those tasks that remain unfinished, help the user break them down into smaller, manageable steps, encouraging a focused approach for completion. "
-        "Emphasize the importance of discipline and consistency. "
-        "Based on today's feedback, create a structured schedule for tomorrow that prioritizes unfinished tasks and seamlessly integrates new tasks as needed. "
-        "This schedule is crafted to maximize focus and efficiency, ensuring a productive day ahead."
+        prompts["guidelines"] + "\n\n" +
+        "Here are the user's main goals:\n" + "\n".join(goals) + "\n\n" +
+        prompts["task_intro"] + "\n\n" +
+        "\n\n".join(task_reports) + "\n\n" +
+        prompts["task_review"]
     )
 
     # Print the prompt for debugging purposes
